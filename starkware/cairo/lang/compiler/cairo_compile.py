@@ -155,7 +155,6 @@ def get_module_reader(cairo_path: List[str]) -> ModuleReader:
         for path in cairo_path + [os.curdir, starkware_src]
         if path is not None and os.path.isdir(path)
     ]
-
     return ModuleReader(paths=cairo_path, cairo_suffix=".cairo")
 
 

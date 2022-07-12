@@ -44,6 +44,10 @@ from starkware.cairo.lang.compiler.ast.code_elements import (
     CodeElementTemporaryVariable,
     CodeElementTypeDef,
     CodeElementUnpackBinding,
+    CodeElementCompoundVerifyEq,
+    CodeElementCompoundVerifyGeq,
+    CodeElementCompoundVerifyNeq,
+    CodeElementCompoundVerifyLt,
     CodeElementWith,
     CodeElementWithAttr,
     CommentedCodeElement,
@@ -69,6 +73,10 @@ from starkware.cairo.lang.compiler.ast.formatting_utils import get_max_line_leng
 from starkware.cairo.lang.compiler.ast.instructions import (
     AddApInstruction,
     AssertEqInstruction,
+    VerifyEqInstruction,
+    VerifyNeqInstruction,
+    VerifyGeqInstruction,
+    VerifyLtInstruction,
     CallInstruction,
     CallLabelInstruction,
     DefineWordInstruction,
@@ -1243,6 +1251,147 @@ Expected 'elm.element_type' to be a 'namespace'. Found: '{elm.element_type}'."""
         if self.auxiliary_info is not None:
             self.auxiliary_info.finish_compound_assert_eq()
 
+    def visit_CodeElementCompoundVerifyEq(self, instruction: CodeElementCompoundVerifyEq):
+        expr_a, expr_type_a = self.simplify_expr(instruction.a)
+        expr_b, expr_type_b = self.simplify_expr(instruction.b)
+        if expr_type_a != expr_type_b:
+            raise PreprocessorError(
+                f"Cannot compare '{expr_type_a.format()}' and '{expr_type_b.format()}'.",
+                location=instruction.location,
+            )
+
+        if self.auxiliary_info is not None:
+            self.auxiliary_info.start_compound_assert_eq(lhs=instruction.a, rhs=instruction.b)
+
+        dst_exprs = self.simplified_expr_to_felt_expr_list(expr=expr_a, expr_type=expr_type_a)
+        src_exprs = self.simplified_expr_to_felt_expr_list(expr=expr_b, expr_type=expr_type_b)
+        original_ap_tracking = self.flow_tracking.get_ap_tracking()
+
+        for dst, src in safe_zip(dst_exprs, src_exprs):
+            ap_diff = self.flow_tracking.get_ap_tracking() - original_ap_tracking
+            dst = self.simplifier.visit(translate_ap(dst, ap_diff))
+            src = self.simplifier.visit(translate_ap(src, ap_diff))
+            (expr_a, expr_b) = process_compound_assert(dst, src, self._compound_expression_context)
+            verify_eq = CodeElementInstruction(
+                instruction=InstructionAst(
+                    body=VerifyEqInstruction(a=expr_a, b=expr_b, location=instruction.location),
+                    inc_ap=False,
+                    location=instruction.location,
+                )
+            )
+
+            self.visit(verify_eq)
+
+        if self.auxiliary_info is not None:
+            self.auxiliary_info.finish_compound_assert_eq()
+
+    def visit_CodeElementCompoundVerifyNeq(self, instruction: CodeElementCompoundVerifyNeq):
+        expr_a, expr_type_a = self.simplify_expr(instruction.a)
+        expr_b, expr_type_b = self.simplify_expr(instruction.b)
+        if expr_type_a != expr_type_b:
+            raise PreprocessorError(
+                f"Cannot compare '{expr_type_a.format()}' and '{expr_type_b.format()}'.",
+                location=instruction.location,
+            )
+
+        if self.auxiliary_info is not None:
+            self.auxiliary_info.start_compound_assert_eq(lhs=instruction.a, rhs=instruction.b)
+
+        dst_exprs = self.simplified_expr_to_felt_expr_list(expr=expr_a, expr_type=expr_type_a)
+        src_exprs = self.simplified_expr_to_felt_expr_list(expr=expr_b, expr_type=expr_type_b)
+        original_ap_tracking = self.flow_tracking.get_ap_tracking()
+
+        for dst, src in safe_zip(dst_exprs, src_exprs):
+            ap_diff = self.flow_tracking.get_ap_tracking() - original_ap_tracking
+            dst = self.simplifier.visit(translate_ap(dst, ap_diff))
+            src = self.simplifier.visit(translate_ap(src, ap_diff))
+            (expr_a, expr_b) = process_compound_assert(dst, src, self._compound_expression_context)
+            verify_neq = CodeElementInstruction(
+                instruction=InstructionAst(
+                    body=VerifyNeqInstruction(a=expr_a, b=expr_b, location=instruction.location),
+                    inc_ap=False,
+                    location=instruction.location,
+                )
+            )
+
+            self.visit(verify_neq)
+
+        if self.auxiliary_info is not None:
+            self.auxiliary_info.finish_compound_assert_eq()
+
+    def visit_CodeElementCompoundVerifyGeq(self, instruction: CodeElementCompoundVerifyGeq):
+        expr_a, expr_type_a = self.simplify_expr(instruction.a)
+        expr_b, expr_type_b = self.simplify_expr(instruction.b)
+        if expr_type_a != expr_type_b:
+            raise PreprocessorError(
+                f"Cannot compare '{expr_type_a.format()}' and '{expr_type_b.format()}'.",
+                location=instruction.location,
+            )
+
+        if self.auxiliary_info is not None:
+            self.auxiliary_info.start_compound_assert_eq(lhs=instruction.a, rhs=instruction.b)
+
+        dst_exprs = self.simplified_expr_to_felt_expr_list(expr=expr_a, expr_type=expr_type_a)
+        src_exprs = self.simplified_expr_to_felt_expr_list(expr=expr_b, expr_type=expr_type_b)
+        original_ap_tracking = self.flow_tracking.get_ap_tracking()
+
+        for dst, src in safe_zip(dst_exprs, src_exprs):
+            ap_diff = self.flow_tracking.get_ap_tracking() - original_ap_tracking
+            dst = self.simplifier.visit(translate_ap(dst, ap_diff))
+            src = self.simplifier.visit(translate_ap(src, ap_diff))
+            print(dst)
+            print(src)
+            (expr_a, expr_b) = process_compound_assert(dst, src, self._compound_expression_context)
+            verify_geq = CodeElementInstruction(
+                instruction=InstructionAst(
+                    body=VerifyGeqInstruction(a=expr_a, b=expr_b, location=instruction.location),
+                    inc_ap=False,
+                    location=instruction.location,
+                )
+            )
+
+            self.visit(verify_geq)
+
+        if self.auxiliary_info is not None:
+            self.auxiliary_info.finish_compound_assert_eq()
+
+    def visit_CodeElementCompoundVerifyLt(self, instruction: CodeElementCompoundVerifyLt):
+        expr_a, expr_type_a = self.simplify_expr(instruction.a)
+        expr_b, expr_type_b = self.simplify_expr(instruction.b)
+        if expr_type_a != expr_type_b:
+            raise PreprocessorError(
+                f"Cannot compare '{expr_type_a.format()}' and '{expr_type_b.format()}'.",
+                location=instruction.location,
+            )
+
+        if self.auxiliary_info is not None:
+            self.auxiliary_info.start_compound_assert_eq(lhs=instruction.a, rhs=instruction.b)
+
+        dst_exprs = self.simplified_expr_to_felt_expr_list(expr=expr_a, expr_type=expr_type_a)
+        src_exprs = self.simplified_expr_to_felt_expr_list(expr=expr_b, expr_type=expr_type_b)
+        original_ap_tracking = self.flow_tracking.get_ap_tracking()
+
+        for dst, src in safe_zip(dst_exprs, src_exprs):
+            ap_diff = self.flow_tracking.get_ap_tracking() - original_ap_tracking
+            dst = self.simplifier.visit(translate_ap(dst, ap_diff))
+            src = self.simplifier.visit(translate_ap(src, ap_diff))
+            print(dst)
+            print(src)
+            (expr_a, expr_b) = process_compound_assert(dst, src, self._compound_expression_context)
+            verify_lt = CodeElementInstruction(
+                instruction=InstructionAst(
+                    body=VerifyLtInstruction(a=expr_a, b=expr_b, location=instruction.location),
+                    inc_ap=False,
+                    location=instruction.location,
+                )
+            )
+
+            self.visit(verify_lt)
+
+        if self.auxiliary_info is not None:
+            self.auxiliary_info.finish_compound_assert_eq()
+
+
     def visit_CodeElementStaticAssert(self, elm: CodeElementStaticAssert):
         a = self.simplify_expr_as_felt(elm.a)
         b = self.simplify_expr_as_felt(elm.b)
@@ -2031,6 +2180,42 @@ Expected expression of type '{member.typ.format()}', got '{cairo_type.format()}'
         if self.auxiliary_info is not None:
             self.auxiliary_info.add_assert_eq(lhs=instruction.a, rhs=instruction.b)
         return InstructionFlows(next_inst=RegChangeKnown(0)), AssertEqInstruction(
+            a=self.simplify_expr_as_felt(instruction.a),
+            b=self.simplify_expr_as_felt(instruction.b),
+            location=instruction.location,
+        )
+
+    def visit_VerifyLtInstruction(self, instruction: VerifyLtInstruction):
+        if self.auxiliary_info is not None:
+            self.auxiliary_info.add_assert_eq(lhs=instruction.a, rhs=instruction.b)
+        return InstructionFlows(next_inst=RegChangeKnown(0)), VerifyLtInstruction(
+            a=self.simplify_expr_as_felt(instruction.a),
+            b=self.simplify_expr_as_felt(instruction.b),
+            location=instruction.location,
+        )
+
+    def visit_VerifyGeqInstruction(self, instruction: VerifyGeqInstruction):
+        if self.auxiliary_info is not None:
+            self.auxiliary_info.add_assert_eq(lhs=instruction.a, rhs=instruction.b)
+        return InstructionFlows(next_inst=RegChangeKnown(0)), VerifyGeqInstruction(
+            a=self.simplify_expr_as_felt(instruction.a),
+            b=self.simplify_expr_as_felt(instruction.b),
+            location=instruction.location,
+        )
+
+    def visit_VerifyEqInstruction(self, instruction: VerifyEqInstruction):
+        if self.auxiliary_info is not None:
+            self.auxiliary_info.add_assert_eq(lhs=instruction.a, rhs=instruction.b)
+        return InstructionFlows(next_inst=RegChangeKnown(0)), VerifyEqInstruction(
+            a=self.simplify_expr_as_felt(instruction.a),
+            b=self.simplify_expr_as_felt(instruction.b),
+            location=instruction.location,
+        )
+
+    def visit_VerifyNeqInstruction(self, instruction: VerifyNeqInstruction):
+        if self.auxiliary_info is not None:
+            self.auxiliary_info.add_assert_eq(lhs=instruction.a, rhs=instruction.b)
+        return InstructionFlows(next_inst=RegChangeKnown(0)), VerifyNeqInstruction(
             a=self.simplify_expr_as_felt(instruction.a),
             b=self.simplify_expr_as_felt(instruction.b),
             location=instruction.location,

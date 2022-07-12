@@ -110,6 +110,10 @@ def encode_instruction(element: BytecodeElement, prime: int) -> List[int]:
             Instruction.Opcode.CALL: Instruction.FpUpdate.AP_PLUS2,
             Instruction.Opcode.RET: Instruction.FpUpdate.DST,
             Instruction.Opcode.ASSERT_EQ: Instruction.FpUpdate.REGULAR,
+            Instruction.Opcode.VERIFY_LT: Instruction.FpUpdate.REGULAR,
+            Instruction.Opcode.VERIFY_NEQ: Instruction.FpUpdate.REGULAR,
+            Instruction.Opcode.VERIFY_EQ: Instruction.FpUpdate.REGULAR,
+            Instruction.Opcode.VERIFY_GEQ: Instruction.FpUpdate.REGULAR,
         }[inst.opcode]
     ), f"fp_update {inst.fp_update} does not match opcode f{inst.opcode}"
 
@@ -118,6 +122,10 @@ def encode_instruction(element: BytecodeElement, prime: int) -> List[int]:
         Instruction.Opcode.CALL: 1 << OPCODE_CALL_BIT,
         Instruction.Opcode.RET: 1 << OPCODE_RET_BIT,
         Instruction.Opcode.ASSERT_EQ: 1 << OPCODE_ASSERT_EQ_BIT,
+        Instruction.Opcode.VERIFY_EQ: (1 << OPCODE_CALL_BIT) | (1 << OPCODE_RET_BIT),
+        Instruction.Opcode.VERIFY_NEQ: (1 << OPCODE_ASSERT_EQ_BIT) | (1 << OPCODE_CALL_BIT) | (1 << OPCODE_RET_BIT),
+        Instruction.Opcode.VERIFY_LT: (1 << OPCODE_RET_BIT) | (1 << OPCODE_ASSERT_EQ_BIT),
+        Instruction.Opcode.VERIFY_GEQ: (1 << OPCODE_ASSERT_EQ_BIT) | (1 << OPCODE_CALL_BIT),
         Instruction.Opcode.NOP: 0,
     }[inst.opcode]
 
@@ -195,6 +203,10 @@ def decode_instruction(encoding: int, imm: Optional[int] = None) -> Instruction:
         (0, 1, 0): Instruction.Opcode.RET,
         (0, 0, 1): Instruction.Opcode.ASSERT_EQ,
         (0, 0, 0): Instruction.Opcode.NOP,
+        (0, 1, 1): Instruction.Opcode.VERIFY_LT,
+        (1, 0, 1): Instruction.Opcode.VERIFY_GEQ,
+        (1, 1, 0): Instruction.Opcode.VERIFY_EQ,
+        (1, 1, 1): Instruction.Opcode.VERIFY_NEQ,
     }[
         (flags >> OPCODE_CALL_BIT) & 1,
         (flags >> OPCODE_RET_BIT) & 1,

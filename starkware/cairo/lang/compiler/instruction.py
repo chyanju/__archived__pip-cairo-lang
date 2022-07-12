@@ -108,6 +108,10 @@ class Instruction(BytecodeElement):
         ASSERT_EQ = auto()
         CALL = auto()
         RET = auto()
+        VERIFY_LT = auto()
+        VERIFY_EQ = auto()
+        VERIFY_GEQ = auto()
+        VERIFY_NEQ = auto()
 
     opcode: Opcode
 

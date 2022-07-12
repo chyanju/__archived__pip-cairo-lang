@@ -8,6 +8,18 @@ Clone this repo, and cd to repo root, then use the following command to install 
 pip install .
 ```
 
+### Adding verify statements
+
+Use `verify a op b` to add a verify statement, for example:
+
+```cairo
+func main():
+  [ap] = 1000; ap++
+  verify [ap-1] != 0
+  ret
+end
+```
+
 ### Creating A Symbolic Variable
 
 Use `symbolic(type, tag)` to create a symbolic variable, for example:

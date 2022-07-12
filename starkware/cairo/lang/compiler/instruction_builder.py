@@ -20,6 +20,10 @@ from starkware.cairo.lang.compiler.ast.instructions import (
     JumpInstruction,
     JumpToLabelInstruction,
     RetInstruction,
+    VerifyEqInstruction,
+    VerifyGeqInstruction,
+    VerifyLtInstruction,
+    VerifyNeqInstruction,
 )
 from starkware.cairo.lang.compiler.const_expr_checker import is_const_expr
 from starkware.cairo.lang.compiler.error_handling import LocationError
@@ -39,6 +43,14 @@ class InstructionBuilderError(LocationError):
 def build_instruction(instruction: InstructionAst) -> BytecodeElement:
     if isinstance(instruction.body, AssertEqInstruction):
         return _build_assert_eq_instruction(instruction)
+    elif isinstance(instruction.body, VerifyEqInstruction):
+        return _build_verify_eq_instruction(instruction)
+    elif isinstance(instruction.body, VerifyLtInstruction):
+        return _build_verify_lt_instruction(instruction)
+    elif isinstance(instruction.body, VerifyGeqInstruction):
+        return _build_verify_geq_instruction(instruction)
+    elif isinstance(instruction.body, VerifyNeqInstruction):
+        return _build_verify_neq_instruction(instruction)
     elif isinstance(instruction.body, JumpInstruction):
         return _build_jump_instruction(instruction)
     elif isinstance(instruction.body, JnzInstruction):
@@ -107,6 +119,239 @@ def _apply_inverse_syntactic_sugar(instruction_ast: AssertEqInstruction) -> Asse
             )
 
     return instruction_ast
+
+def _build_verify_eq_instruction(instruction_ast: InstructionAst) -> Instruction:
+    """
+    Builds an Instruction object from the AST object, assuming the instruction is of type AssertEq.
+    If a = b is not a valid Cairo instruction, it will try to write it as b = a. For example,
+    "[[ap]] = [fp]" is supported even though its operands are reversed in the bytecode.
+    """
+    try:
+        # First try to parse the instruction in its the original form.
+        return _build_verify_eq_instruction_inner(instruction_ast)
+    except InstructionBuilderError as exc_:
+        # Store the exception in case the second attempt fails as well.
+        exc = exc_
+
+    try:
+        # If it fails, try to parse it as verify b = a instead of a = b.
+        instruction_body: VerifyEqInstruction = cast(VerifyEqInstruction, instruction_ast.body)
+        return _build_verify_eq_instruction_inner(
+            dataclasses.replace(
+                instruction_ast,
+                body=dataclasses.replace(
+                    instruction_body, a=instruction_body.b, b=instruction_body.a
+                ),
+            )
+        )
+    except Exception:
+        # If both fail, raise the exception thrown by parsing the original form.
+        raise exc from None
+
+def _build_verify_neq_instruction(instruction_ast: InstructionAst) -> Instruction:
+    """
+    Builds an Instruction object from the AST object, assuming the instruction is of type AssertEq.
+    If a = b is not a valid Cairo instruction, it will try to write it as b = a. For example,
+    "[[ap]] = [fp]" is supported even though its operands are reversed in the bytecode.
+    """
+    try:
+        # First try to parse the instruction in its the original form.
+        return _build_verify_neq_instruction_inner(instruction_ast)
+    except InstructionBuilderError as exc_:
+        # Store the exception in case the second attempt fails as well.
+        exc = exc_
+
+    try:
+        # If it fails, try to parse it as verify b = a instead of a = b.
+        instruction_body: VerifyNeqInstruction = cast(VerifyNeqInstruction, instruction_ast.body)
+        return _build_verify_neq_instruction_inner(
+            dataclasses.replace(
+                instruction_ast,
+                body=dataclasses.replace(
+                    instruction_body, a=instruction_body.b, b=instruction_body.a
+                ),
+            )
+        )
+    except Exception:
+        # If both fail, raise the exception thrown by parsing the original form.
+        raise exc from None
+
+def _build_verify_lt_instruction(instruction_ast: InstructionAst) -> Instruction:
+    """
+    Builds an Instruction object from the AST object, assuming the instruction is of type AssertEq.
+    If a = b is not a valid Cairo instruction, it will try to write it as b = a. For example,
+    "[[ap]] = [fp]" is supported even though its operands are reversed in the bytecode.
+    """
+    try:
+        # First try to parse the instruction in its the original form.
+        return _build_verify_lt_instruction_inner(instruction_ast)
+    except InstructionBuilderError as exc_:
+        # Store the exception in case the second attempt fails as well.
+        exc = exc_
+
+    try:
+        # If it fails, try to parse it as verify b = a instead of a = b.
+        instruction_body: VerifyLtInstruction = cast(VerifyLtInstruction, instruction_ast.body)
+        return _build_verify_lt_instruction_inner(
+            dataclasses.replace(
+                instruction_ast,
+                body=dataclasses.replace(
+                    instruction_body, a=instruction_body.b, b=instruction_body.a
+                ),
+            )
+        )
+    except Exception:
+        # If both fail, raise the exception thrown by parsing the original form.
+        raise exc from None
+
+def _build_verify_geq_instruction(instruction_ast: InstructionAst) -> Instruction:
+    """
+    Builds an Instruction object from the AST object, assuming the instruction is of type AssertEq.
+    If a = b is not a valid Cairo instruction, it will try to write it as b = a. For example,
+    "[[ap]] = [fp]" is supported even though its operands are reversed in the bytecode.
+    """
+    try:
+        # First try to parse the instruction in its the original form.
+        return _build_verify_geq_instruction_inner(instruction_ast)
+    except InstructionBuilderError as exc_:
+        # Store the exception in case the second attempt fails as well.
+        exc = exc_
+
+    try:
+        # If it fails, try to parse it as verify b = a instead of a = b.
+        instruction_body: VerifyGeqInstruction = cast(VerifyGeqInstruction, instruction_ast.body)
+        return _build_verify_geq_instruction_inner(
+            dataclasses.replace(
+                instruction_ast,
+                body=dataclasses.replace(
+                    instruction_body, a=instruction_body.b, b=instruction_body.a
+                ),
+            )
+        )
+    except Exception:
+        # If both fail, raise the exception thrown by parsing the original form.
+        raise exc from None
+
+
+def _build_verify_eq_instruction_inner(instruction_ast: InstructionAst) -> Instruction:
+    """
+    Builds an Instruction object from the AST object, assuming the instruction is of type AssertEq.
+    """
+    instruction_body: VerifyEqInstruction = cast(VerifyEqInstruction, instruction_ast.body)
+
+    dst_expr = _parse_dereference(instruction_body.a)
+    dst_register, off0 = _parse_register_offset(dst_expr)
+
+    res_desc = _parse_res(instruction_body.b)
+
+    ap_update = (
+        Instruction.ApUpdate.ADD1 if instruction_ast.inc_ap else Instruction.ApUpdate.REGULAR
+    )
+
+    return Instruction(
+        off0=off0,
+        off1=res_desc.off1,
+        off2=res_desc.off2,
+        imm=res_desc.imm,
+        dst_register=dst_register,
+        op0_register=res_desc.op0_register,
+        op1_addr=res_desc.op1_addr,
+        res=res_desc.res,
+        pc_update=Instruction.PcUpdate.REGULAR,
+        ap_update=ap_update,
+        fp_update=Instruction.FpUpdate.REGULAR,
+        opcode=Instruction.Opcode.VERIFY_EQ,
+    )
+
+def _build_verify_geq_instruction_inner(instruction_ast: InstructionAst) -> Instruction:
+    """
+    Builds an Instruction object from the AST object, assuming the instruction is of type AssertEq.
+    """
+    instruction_body: VerifyGtInstruction = cast(VerifyGeqInstruction, instruction_ast.body)
+
+    dst_expr = _parse_dereference(instruction_body.a)
+    dst_register, off0 = _parse_register_offset(dst_expr)
+
+    res_desc = _parse_res(instruction_body.b)
+
+    ap_update = (
+        Instruction.ApUpdate.ADD1 if instruction_ast.inc_ap else Instruction.ApUpdate.REGULAR
+    )
+
+    return Instruction(
+        off0=off0,
+        off1=res_desc.off1,
+        off2=res_desc.off2,
+        imm=res_desc.imm,
+        dst_register=dst_register,
+        op0_register=res_desc.op0_register,
+        op1_addr=res_desc.op1_addr,
+        res=res_desc.res,
+        pc_update=Instruction.PcUpdate.REGULAR,
+        ap_update=ap_update,
+        fp_update=Instruction.FpUpdate.REGULAR,
+        opcode=Instruction.Opcode.VERIFY_GEQ,
+    )
+
+def _build_verify_neq_instruction_inner(instruction_ast: InstructionAst) -> Instruction:
+    """
+    Builds an Instruction object from the AST object, assuming the instruction is of type AssertEq.
+    """
+    instruction_body: VerifyNeqInstruction = cast(VerifyNeqInstruction, instruction_ast.body)
+
+    dst_expr = _parse_dereference(instruction_body.a)
+    dst_register, off0 = _parse_register_offset(dst_expr)
+
+    res_desc = _parse_res(instruction_body.b)
+
+    ap_update = (
+        Instruction.ApUpdate.ADD1 if instruction_ast.inc_ap else Instruction.ApUpdate.REGULAR
+    )
+
+    return Instruction(
+        off0=off0,
+        off1=res_desc.off1,
+        off2=res_desc.off2,
+        imm=res_desc.imm,
+        dst_register=dst_register,
+        op0_register=res_desc.op0_register,
+        op1_addr=res_desc.op1_addr,
+        res=res_desc.res,
+        pc_update=Instruction.PcUpdate.REGULAR,
+        ap_update=ap_update,
+        fp_update=Instruction.FpUpdate.REGULAR,
+        opcode=Instruction.Opcode.VERIFY_NEQ,
+    )
+
+def _build_verify_lt_instruction_inner(instruction_ast: InstructionAst) -> Instruction:
+    """
+    Builds an Instruction object from the AST object, assuming the instruction is of type AssertEq.
+    """
+    instruction_body: VerifyLtInstruction = cast(VerifyLtInstruction, instruction_ast.body)
+
+    dst_expr = _parse_dereference(instruction_body.a)
+    dst_register, off0 = _parse_register_offset(dst_expr)
+
+    res_desc = _parse_res(instruction_body.b)
+
+    ap_update = (
+        Instruction.ApUpdate.ADD1 if instruction_ast.inc_ap else Instruction.ApUpdate.REGULAR
+    )
+
+    return Instruction(
+        off0=off0,
+        off1=res_desc.off1,
+        off2=res_desc.off2,
+        imm=res_desc.imm,
+        dst_register=dst_register,
+        op0_register=res_desc.op0_register,
+        op1_addr=res_desc.op1_addr,
+        res=res_desc.res,
+        pc_update=Instruction.PcUpdate.REGULAR,
+        ap_update=ap_update,
+        fp_update=Instruction.FpUpdate.REGULAR,
+        opcode=Instruction.Opcode.VERIFY_LT,
+    )
 
 
 def _build_assert_eq_instruction(instruction_ast: InstructionAst) -> Instruction:

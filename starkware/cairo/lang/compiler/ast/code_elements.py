@@ -177,6 +177,70 @@ class CodeElementCompoundAssertEq(CodeElement):
     def get_children(self) -> Sequence[Optional[AstNode]]:
         return [self.a, self.b]
 
+@dataclasses.dataclass
+class CodeElementCompoundVerifyEq(CodeElement):
+    """
+    Represents the statement "verify a = b" for two (compound) expressions a, b.
+    """
+
+    a: Expression
+    b: Expression
+    location: Optional[Location] = LocationField
+
+    def format(self, allowed_line_length):
+        return f"verify {self.a.format()} = {self.b.format()}"
+
+    def get_children(self) -> Sequence[Optional[AstNode]]:
+        return [self.a, self.b]
+
+@dataclasses.dataclass
+class CodeElementCompoundVerifyNeq(CodeElement):
+    """
+    Represents the statement "verify a != b" for two (compound) expressions a, b.
+    """
+
+    a: Expression
+    b: Expression
+    location: Optional[Location] = LocationField
+
+    def format(self, allowed_line_length):
+        return f"verify {self.a.format()} != {self.b.format()}"
+
+    def get_children(self) -> Sequence[Optional[AstNode]]:
+        return [self.a, self.b]
+
+@dataclasses.dataclass
+class CodeElementCompoundVerifyLt(CodeElement):
+    """
+    Represents the statement "verify a < b" for two (compound) expressions a, b.
+    """
+
+    a: Expression
+    b: Expression
+    location: Optional[Location] = LocationField
+
+    def format(self, allowed_line_length):
+        return f"verify {self.a.format()} < {self.b.format()}"
+
+    def get_children(self) -> Sequence[Optional[AstNode]]:
+        return [self.a, self.b]
+
+@dataclasses.dataclass
+class CodeElementCompoundVerifyGeq(CodeElement):
+    """
+    Represents the statement "verify a >= b" for two (compound) expressions a, b.
+    """
+
+    a: Expression
+    b: Expression
+    location: Optional[Location] = LocationField
+
+    def format(self, allowed_line_length):
+        return f"verify {self.a.format()} >= {self.b.format()}"
+
+    def get_children(self) -> Sequence[Optional[AstNode]]:
+        return [self.a, self.b]
+
 
 @dataclasses.dataclass
 class CodeElementStaticAssert(CodeElement):

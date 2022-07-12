@@ -147,6 +147,10 @@ code_element: instruction                                       -> code_element_
             | "local" typed_identifier ("=" expr)?              -> code_element_local_var
             | "tempvar" typed_identifier ("=" expr)?            -> code_element_temp_var
             | "assert" expr "=" expr                            -> code_element_compound_assert_eq
+            | "verify" expr "<" expr                            -> code_element_verify_lt
+            | "verify" expr ">=" expr                           -> code_element_verify_geq
+            | "verify" expr "=" expr                            -> code_element_verify_eq
+            | "verify" expr "!=" expr                           -> code_element_verify_neq
             | "static_assert" expr _DBL_EQ expr                 -> code_element_static_assert
             | "return" "(" arg_list ")"                         -> code_element_return
             | "return" function_call                            -> code_element_tail_call

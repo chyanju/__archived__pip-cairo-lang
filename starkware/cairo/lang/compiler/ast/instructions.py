@@ -38,6 +38,70 @@ class AssertEqInstruction(InstructionBody):
     def get_children(self) -> Sequence[Optional[AstNode]]:
         return [self.a, self.b]
 
+@dataclasses.dataclass
+class VerifyEqInstruction(InstructionBody):
+    """
+    Represents the instruction "verify a = b" for two expressions a, b.
+    """
+
+    a: Expression
+    b: Expression
+    location: Optional[Location] = LocationField
+
+    def format(self):
+        return f"{self.a.format()} = {self.b.format()}"
+
+    def get_children(self) -> Sequence[Optional[AstNode]]:
+        return [self.a, self.b]
+
+@dataclasses.dataclass
+class VerifyNeqInstruction(InstructionBody):
+    """
+    Represents the instruction "verify a != b" for two expressions a, b.
+    """
+
+    a: Expression
+    b: Expression
+    location: Optional[Location] = LocationField
+
+    def format(self):
+        return f"{self.a.format()} != {self.b.format()}"
+
+    def get_children(self) -> Sequence[Optional[AstNode]]:
+        return [self.a, self.b]
+
+@dataclasses.dataclass
+class VerifyLtInstruction(InstructionBody):
+    """
+    Represents the instruction "verify a < b" for two expressions a, b.
+    """
+
+    a: Expression
+    b: Expression
+    location: Optional[Location] = LocationField
+
+    def format(self):
+        return f"{self.a.format()} < {self.b.format()}"
+
+    def get_children(self) -> Sequence[Optional[AstNode]]:
+        return [self.a, self.b]
+
+@dataclasses.dataclass
+class VerifyGeqInstruction(InstructionBody):
+    """
+    Represents the instruction "verify a >= b" for two expressions a, b.
+    """
+
+    a: Expression
+    b: Expression
+    location: Optional[Location] = LocationField
+
+    def format(self):
+        return f"{self.a.format()} >= {self.b.format()}"
+
+    def get_children(self) -> Sequence[Optional[AstNode]]:
+        return [self.a, self.b]
+
 
 @dataclasses.dataclass
 class JumpInstruction(InstructionBody):
