@@ -5,6 +5,7 @@ from starkware.cairo.lang.compiler.ast.expr import (
     ExprAddressOf,
     ExprAssignment,
     ExprCast,
+    ExprSymbolic,
     ExprConst,
     ExprDeref,
     ExprDot,
@@ -124,6 +125,14 @@ class ExpressionTransformer:
             expr=inner_expr,
             dest_type=expr.dest_type,
             cast_type=expr.cast_type,
+            location=self.location_modifier(expr.location),
+        )
+
+    def visit_ExprSymbolic(self, expr: ExprSymbolic):
+        return ExprSymbolic(
+            dest_type=expr.dest_type,
+            tag=self.visit(expr.tag),
+            # tag=expr.tag,
             location=self.location_modifier(expr.location),
         )
 

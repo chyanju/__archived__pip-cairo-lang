@@ -64,10 +64,11 @@ def wrap_lark_error(err: LarkError, input_file: InputFile) -> Exception:
             expected.add("register")
         if {"MINUS", "INT"} <= expected:
             expected.remove("MINUS")
-        if {"CAST", "LPAR", "LSQB", "IDENTIFIER", "INT", "AMPERSAND", "register"} <= expected:
+        if {"CAST", "SYMBOLIC", "LPAR", "LSQB", "IDENTIFIER", "INT", "AMPERSAND", "register"} <= expected:
             expected -= {
                 "AMPERSAND",
                 "CAST",
+                "SYMBOLIC",
                 "HEXINT",
                 "IDENTIFIER",
                 "INT",
@@ -104,6 +105,7 @@ def wrap_lark_error(err: LarkError, input_file: InputFile) -> Exception:
             "BUILTINS": '"%builtins"',
             "CALL": '"call"',
             "CAST": '"cast"',
+            "SYMBOLIC": '"symbolic"',
             "COLON": '":"',
             "COMMA": '","',
             "CODEOFFSET": '"codeoffset"',

@@ -50,6 +50,7 @@ from starkware.cairo.lang.compiler.ast.expr import (
     ExprAddressOf,
     ExprAssignment,
     ExprCast,
+    ExprSymbolic,
     ExprConst,
     ExprDeref,
     ExprDot,
@@ -381,6 +382,12 @@ class ParserTransformer(Transformer):
     def atom_cast(self, value, meta):
         return ExprCast(
             expr=value[1], notes=value[0], dest_type=value[2], location=self.meta2loc(meta)
+        )
+
+    @v_args(meta=True)
+    def atom_symbolic(self, value, meta):
+        return ExprSymbolic(
+            dest_type=value[0], tag=value[1], location=self.meta2loc(meta)
         )
 
     @v_args(meta=True)

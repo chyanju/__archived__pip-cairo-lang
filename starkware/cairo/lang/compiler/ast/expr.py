@@ -364,6 +364,24 @@ class ExprCast(Expression):
     def get_children(self) -> Sequence[Optional[AstNode]]:
         return [self.expr, self.dest_type]
 
+@dataclasses.dataclass
+class ExprSymbolic(Expression):
+    """
+    Represents a symbolic expression of the form "symbolic(tag, T)" (which creates a symbolic variable of type T).
+    """
+
+    dest_type: CairoType
+    tag: Expression
+    location: Optional[Location] = LocationField
+
+    def to_expr_str(self):
+        return ExpressionString.highest(
+            f"symbolic({self.dest_type.format()}, {str(self.tag.to_expr_str())})"
+        )
+
+    def get_children(self) -> Sequence[Optional[AstNode]]:
+        return [self.dest_type, self.tag]
+
 
 @dataclasses.dataclass
 class ExprTuple(Expression):

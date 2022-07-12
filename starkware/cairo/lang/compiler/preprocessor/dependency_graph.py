@@ -36,6 +36,7 @@ class DependencyGraphVisitor(Visitor):
         self.current_function: Optional[ScopedName] = None
 
     def _visit_default(self, obj):
+        # print("# [debug] obj is: {}".format(str(obj)))
         for child in obj.get_children():
             if child is not None:
                 self.visit(child)

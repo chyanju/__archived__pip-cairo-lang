@@ -7,6 +7,7 @@ from starkware.cairo.lang.compiler.ast.expr import (
     Expression,
     ExprOperator,
     ExprReg,
+    ExprSymbolic,
 )
 from starkware.cairo.lang.compiler.ast.instructions import (
     AddApInstruction,
@@ -404,6 +405,15 @@ def _parse_res(expr: Expression) -> ResDescription:
         )
     elif isinstance(expr, ExprOperator):
         return _parse_res_operator(expr)
+    elif isinstance(expr, ExprSymbolic):
+        return ResDescription(
+            off1=-1,
+            off2=1,
+            imm=expr.tag.val,
+            op0_register=Register.FP,
+            op1_addr=Instruction.Op1Addr.IMM,
+            res=Instruction.Res.SYMBOLIC,
+        )
     else:
         raise InstructionBuilderError("Invalid RHS expression.", location=expr.location)
 

@@ -12,6 +12,7 @@ from starkware.cairo.lang.compiler.ast.cairo_types import (
 from starkware.cairo.lang.compiler.ast.expr import (
     ExprAddressOf,
     ExprCast,
+    ExprSymbolic,
     ExprConst,
     ExprDeref,
     ExprDot,
@@ -326,6 +327,10 @@ class TypeSystemVisitor(IdentifierAwareVisitor):
 
         # Remove the cast() from the expression, but keep its original location.
         return dataclasses.replace(inner_expr, location=expr.location), dest_type
+
+    def visit_ExprSymbolic(self, expr: ExprSymbolic) -> Tuple[ExprSymbolic, CairoType]:
+        return expr, TypeFelt(location=expr.location)
+
 
     def visit_ExprTuple(self, expr: ExprTuple) -> Tuple[ExprTuple, TypeTuple]:
         args = expr.members.args

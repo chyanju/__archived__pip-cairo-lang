@@ -61,6 +61,8 @@ class Instruction(BytecodeElement):
         MUL = auto()
         # res is not constrained.
         UNCONSTRAINED = auto()
+        # res is symbolic
+        SYMBOLIC = auto()
 
     res: Res
 

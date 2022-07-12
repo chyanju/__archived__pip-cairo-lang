@@ -24,8 +24,8 @@ AP_ADD1_BIT = 11
 OPCODE_CALL_BIT = 12
 OPCODE_RET_BIT = 13
 OPCODE_ASSERT_EQ_BIT = 14
-# RESERVED_BIT = 15.
 
+# RESERVED_BIT = 15.
 
 def encode_instruction(element: BytecodeElement, prime: int) -> List[int]:
     """
@@ -76,6 +76,7 @@ def encode_instruction(element: BytecodeElement, prime: int) -> List[int]:
         Instruction.Res.MUL: 1 << RES_MUL_BIT,
         Instruction.Res.OP1: 0,
         Instruction.Res.UNCONSTRAINED: 0,
+        Instruction.Res.SYMBOLIC: (1 << RES_ADD_BIT) | (1 << RES_MUL_BIT),
     }[inst.res]
     assert (inst.res is Instruction.Res.UNCONSTRAINED) == (
         inst.pc_update is Instruction.PcUpdate.JNZ
@@ -169,10 +170,13 @@ def decode_instruction(encoding: int, imm: Optional[int] = None) -> Instruction:
     res = {
         (1, 0): Instruction.Res.ADD,
         (0, 1): Instruction.Res.MUL,
-        (0, 0): Instruction.Res.UNCONSTRAINED
-        if pc_update is Instruction.PcUpdate.JNZ
-        else Instruction.Res.OP1,
+        (0, 0): Instruction.Res.UNCONSTRAINED,
+        (1, 1): Instruction.Res.SYMBOLIC
     }[(flags >> RES_ADD_BIT) & 1, (flags >> RES_MUL_BIT) & 1]
+    # symbolic is a special case
+    if res is not Instruction.Res.SYMBOLIC:
+        if pc_update is Instruction.PcUpdate.JNZ:
+            res = Instruction.Res.OP1
 
     # JNZ opcode means res must be UNCONSTRAINED.
     if pc_update is Instruction.PcUpdate.JNZ:

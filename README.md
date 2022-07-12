@@ -1,3 +1,87 @@
+This is a modified version of the cairo compiler, with specific symbolic language support.
+
+### Installing
+
+Clone this repo, and cd to repo root, then use the following command to install it:
+
+```bash
+pip install .
+```
+
+### Creating A Symbolic Variable
+
+Use `symbolic(type, tag)` to create a symbolic variable, for example:
+
+```cairo
+func main():
+    [ap] = 'sym0'; ap++
+    [ap] = symbolic(felt, 'sym0'); ap++
+    ret
+end
+```
+
+which compiles to the following bytecodes:
+
+```json
+...
+"data": [
+  "0x480680017fff8000",
+  "0x73796d30",
+  "0x486680017fff8000",
+  "0x73796d30",
+  "0x208b7fff7fff7ffe"
+],
+...
+```
+
+### Instruction Decoding
+
+This version adds a new field `SYMBOLIC` to `Instruction.Res`, which now looks like the following:
+
+```python
+class Res(Enum):
+    # res = operand_1.
+    OP1 = 0
+    # res = operand_0 + operand_1.
+    ADD = auto()
+    # res = operand_0 * operand_1.
+    MUL = auto()
+    # res is not constrained.
+    UNCONSTRAINED = auto()
+    # res is symbolic
+    SYMBOLIC = auto()
+```
+
+You can use the following command to test the instruction decoding:
+
+```python
+from starkware.cairo.lang.compiler.encode import decode_instruction
+
+# this decodes the line: [ap] = 'sym0'; ap++
+# where 0x480680017fff8000 is 5189976364521848832
+# and 0x73796d30 is 1937337648
+decode_instruction(5189976364521848832,1937337648)
+# expected return:
+# Instruction(off0=0, off1=-1, off2=1, imm=1937337648, dst_register=<Register.AP: 0>, op0_register=<Register.FP: 1>, op1_addr=<Op1Addr.IMM: 0>, res=<Res.UNCONSTRAINED: 3>, pc_update=<PcUpdate.REGULAR: 0>, ap_update=<ApUpdate.ADD1: 2>, fp_update=<FpUpdate.REGULAR: 0>, opcode=<Opcode.ASSERT_EQ: 1>)
+
+# this decodes the line: [ap] = symbolic(felt, 'sym0'); ap++
+# where 0x486680017fff8000 is 5216997962286071808
+# and 0x73796d30 is 1937337648
+decode_instruction(5216997962286071808,1937337648)
+# expected return:
+# Instruction(off0=0, off1=-1, off2=1, imm=1937337648, dst_register=<Register.AP: 0>, op0_register=<Register.FP: 1>, op1_addr=<Op1Addr.IMM: 0>, res=<Res.SYMBOLIC: 4>, pc_update=<PcUpdate.REGULAR: 0>, ap_update=<ApUpdate.ADD1: 2>, fp_update=<FpUpdate.REGULAR: 0>, opcode=<Opcode.ASSERT_EQ: 1>)
+```
+
+You can see the two instructions are decoded to the same instruction, except for the `res` field: the second one has a special `SYMBOLIC` value set.
+
+### Notes
+
+- Currently only the compiler is modified. The interpreter and other infrastructure remains still, which means they cannot handle the extra `SYMBOLIC` value.
+- The `imm` value can be recovered to short text, i.e., `1937337648` can be recovered to `sym0`. You'll need to read cairo source code to do that if you want the original text.
+- Currently the type (e.g., `felt`) is not encoded into the instruction. So you can treat every symbolic creation as symbolic integer or symbolic bitvector (depending on the backend type used by the symbolic execution engine).
+
+---
+
 # Introduction
 
 [Cairo](https://cairo-lang.org/) is a programming language for writing provable programs.
