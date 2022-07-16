@@ -259,6 +259,9 @@ class VirtualMachine(VirtualMachineBase):
             # In this case res should be the inverse of dst.
             # For efficiency, we do not compute it here.
             return None
+        # TODO: add support for interpreting symbolic variable creation
+        elif instruction.res is Instruction.Res.SYMBOLIC:
+            return 6626069934
         else:
             raise NotImplementedError("Invalid res value")
 
@@ -403,6 +406,10 @@ class VirtualMachine(VirtualMachineBase):
                 )
         elif instruction.opcode in [Instruction.Opcode.RET, Instruction.Opcode.NOP]:
             # Nothing to check.
+            pass
+        elif instruction.opcode in [Instruction.Opcode.VERIFY_EQ, Instruction.Opcode.VERIFY_GEQ,
+                                    Instruction.Opcode.VERIFY_LT, Instruction.Opcode.VERIFY_NEQ]:
+            # TODO: do something for verification
             pass
         else:
             raise NotImplementedError(f"Unsupported opcode {instruction.opcode}.")

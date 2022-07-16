@@ -10,6 +10,8 @@ pip install .
 
 ### Adding verify statements
 
+#### Usage
+
 Use `verify a op b` to add a verify statement, for example:
 
 ```cairo
@@ -20,7 +22,20 @@ func main():
 end
 ```
 
+Example testing commands:
+
+```bash
+cairo-compile ./tests/test2.cairo --output ./tests/test2_compiled.json
+cairo-run --program=./tests/test2_compiled.json --print_output --print_info --relocate_prints --print_memory
+```
+
 ### Creating A Symbolic Variable
+
+#### Note
+
+Currently this won't create an actual symbolic variable. Instead, it returns a special (and concrete) value `6626069934` as a placeholder.
+
+#### Usage
 
 Use `symbolic(type, tag)` to create a symbolic variable, for example:
 
@@ -46,7 +61,14 @@ which compiles to the following bytecodes:
 ...
 ```
 
-### Instruction Decoding
+Example testing commands:
+
+```
+cairo-compile ./tests/test1.cairo --output ./tests/test1_compiled.json
+cairo-run --program=./tests/test1_compiled.json --print_output --print_info --relocate_prints --print_memory
+```
+
+#### Instruction Decoding
 
 This version adds a new field `SYMBOLIC` to `Instruction.Res`, which now looks like the following:
 
