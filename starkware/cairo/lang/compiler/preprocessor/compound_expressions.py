@@ -18,6 +18,7 @@ from starkware.cairo.lang.compiler.ast.expr import (
     ExprNewOperator,
     ExprOperator,
     ExprReg,
+    ExprSymbolic,
 )
 from starkware.cairo.lang.compiler.ast.types import TypedIdentifier
 from starkware.cairo.lang.compiler.error_handling import Location
@@ -171,6 +172,8 @@ class CompoundExpressionVisitor:
             sim,
         )
 
+    def rewrite_ExprSymbolic(self, expr: ExprSymbolic, sim: SimplicityLevel):
+        return expr
     def rewrite_ExprDeref(self, expr: ExprDeref, sim: SimplicityLevel):
         if is_simple_deref(expr):
             # This is already a simple expression, just return it.
