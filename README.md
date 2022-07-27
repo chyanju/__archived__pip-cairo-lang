@@ -1,3 +1,5 @@
+***Note: Development of pip-cairo-lang has been moved to Veridise (https://github.com/Veridise/pip-cairo-lang). Maintenance of this (original) repo is temporarily suspended.***
+
 This is a modified version of the cairo compiler, with specific symbolic language support.
 
 ### Installing
